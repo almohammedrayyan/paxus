@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useAuth } from '@/lib/context';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import type { UserRole } from '@/lib/types';
@@ -126,15 +125,19 @@ const optionalSubjects = [
 /* -------------------------------------------------------------------------- */
 
 export default function SignupPage() {
-  const auth = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedRole = searchParams.get('role');
+  const providerRoles: UserRole[] = ['institute', 'educator', 'publisher'];
 
   // Step management
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
 
   // Step 1 - Role
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(() =>
+    requestedRole && providerRoles.includes(requestedRole as UserRole) ? requestedRole as UserRole : null,
+  );
 
   // Step 2 - Basic info
   const [name, setName] = useState('');
@@ -240,8 +243,7 @@ export default function SignupPage() {
 
     setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 800));
-    auth.login(email, password, selectedRole);
-    navigate(`/${selectedRole}`);
+    navigate('/login');
   };
 
   /* -------- Helpers -------- */

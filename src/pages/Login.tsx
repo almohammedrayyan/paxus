@@ -1,35 +1,19 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useAuth } from '@/lib/context';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import type { UserRole } from '@/lib/types';
-
-const roleLabels: Record<UserRole, string> = {
-  student: 'Student',
-  institute: 'Institute',
-  educator: 'Educator',
-  publisher: 'Publisher',
-  admin: 'Admin',
-};
-
-const demoCredentials: { role: UserRole; email: string; password: string }[] = [
-  { role: 'student', email: 'priya@email.com', password: 'demo1234' },
-  { role: 'institute', email: 'admin@visionias.in', password: 'demo1234' },
-  { role: 'educator', email: 'sidharth@email.com', password: 'demo1234' },
-  { role: 'publisher', email: 'admin@tmh.com', password: 'demo1234' },
-  { role: 'admin', email: 'admin@examprep.com', password: 'demo1234' },
-];
+import { useLoginMutation } from '@/store/authApi';
+import { sessionReceived } from '@/store/authSlice';
+import { useAppDispatch } from '@/store/hooks';
 
 export default function LoginPage() {
-  const auth = useAuth();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [login, { isLoading }] = useLoginMutation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('student');
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -46,19 +30,13 @@ export default function LoginPage() {
       return;
     }
 
-    setIsLoading(true);
-
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    auth.login(email, password, role);
-    navigate(`/${role}`);
-  };
-
-  const handleDemoLogin = (demoRole: UserRole, demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('demo1234');
-    setRole(demoRole);
+    try {
+      const session = await login({ email, password }).unwrap();
+      dispatch(sessionReceived(session));
+      navigate(`/${session.user.role}`, { replace: true });
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Unable to sign in. Please check your credentials and try again.');
+    }
   };
 
   return (
@@ -143,31 +121,6 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Role Selector */}
-              <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Login as
-                </label>
-                <select
-                  id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition appearance-none cursor-pointer"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                    backgroundPosition: 'right 0.5rem center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: '1.5em 1.5em',
-                  }}
-                >
-                  {Object.entries(roleLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               {/* Submit Button */}
               <button
                 type="submit"
@@ -232,51 +185,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Demo Login Info */}
-          <div className="mt-6 bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h3 className="text-sm font-semibold text-gray-900">Demo Accounts</h3>
-            </div>
-            <p className="text-xs text-gray-500 mb-3">
-              Click any role below to auto-fill credentials. Password for all accounts is <code className="bg-gray-100 px-1.5 py-0.5 rounded text-indigo-600 font-mono">demo1234</code>
-            </p>
-            <div className="space-y-2">
-              {demoCredentials.map((cred) => (
-                <button
-                  key={cred.role}
-                  type="button"
-                  onClick={() => handleDemoLogin(cred.role, cred.email)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-left text-sm transition ${
-                    role === cred.role && email === cred.email
-                      ? 'border-indigo-300 bg-indigo-50 ring-1 ring-indigo-200'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                      cred.role === 'student' ? 'bg-blue-100 text-blue-700' :
-                      cred.role === 'institute' ? 'bg-purple-100 text-purple-700' :
-                      cred.role === 'educator' ? 'bg-green-100 text-green-700' :
-                      cred.role === 'publisher' ? 'bg-orange-100 text-orange-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
-                      {roleLabels[cred.role].charAt(0)}
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{roleLabels[cred.role]}</div>
-                      <div className="text-xs text-gray-500">{cred.email}</div>
-                    </div>
-                  </div>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>

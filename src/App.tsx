@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from '@/lib/context';
+import AuthSessionGuard from '@/components/AuthSessionGuard';
 
 // Public pages
 import Home from '@/pages/Home';
@@ -46,8 +46,8 @@ import DashboardLayout from '@/components/DashboardLayout';
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+      <AuthSessionGuard />
+      <Routes>
           {/* Public */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -86,8 +86,7 @@ function App() {
           <Route path="/publisher" element={<DashboardLayout role="publisher"><PublisherDashboard /></DashboardLayout>} />
           <Route path="/publisher/catalog" element={<DashboardLayout role="publisher"><PublisherCatalog /></DashboardLayout>} />
           <Route path="/publisher/insights" element={<DashboardLayout role="publisher"><PublisherInsights /></DashboardLayout>} />
-        </Routes>
-      </AuthProvider>
+      </Routes>
     </BrowserRouter>
   );
 }

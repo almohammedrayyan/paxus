@@ -11,6 +11,49 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
+      {/* Provider registration — shown first so partners can get started immediately */}
+      <section className="relative isolate overflow-hidden bg-slate-950 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(124,58,237,.42),transparent_31%),radial-gradient(circle_at_82%_80%,rgba(14,165,233,.24),transparent_30%)]" />
+        <div className="absolute -top-24 right-[10%] h-72 w-72 rounded-full border border-white/10" />
+        <div className="absolute -bottom-32 left-[35%] h-80 w-80 rounded-full border border-white/5" />
+        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="inline-flex items-center gap-2 rounded-full border border-violet-300/30 bg-violet-400/10 px-4 py-2 text-sm font-medium text-violet-100">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              Grow your education business with ExamPrep
+            </p>
+            <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+              Build your next chapter with <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-sky-300">India&apos;s aspirants.</span>
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+              Launch courses, live learning, and study material for the learners who need it most. Choose how you create, and we&apos;ll tailor your onboarding.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-12 grid max-w-6xl gap-4 md:grid-cols-3">
+            {[
+              { role: 'institute', label: 'Coaching institute', description: 'Bring your classes, test series, and faculty to one powerful storefront.', accent: 'from-violet-500 to-indigo-500', icon: '⌂' },
+              { role: 'educator', label: 'Independent educator', description: 'Teach through courses, live sessions, and personal mentorship.', accent: 'from-sky-500 to-cyan-500', icon: '✦' },
+              { role: 'publisher', label: 'Publisher', description: 'Put books, eBooks, and trusted learning resources in reach of more aspirants.', accent: 'from-fuchsia-500 to-rose-500', icon: '▤' },
+            ].map((option) => (
+              <Link
+                key={option.role}
+                to={`/signup?role=${option.role}`}
+                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.07] p-6 text-left shadow-2xl shadow-black/10 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.12] focus:outline-none focus:ring-2 focus:ring-violet-300"
+              >
+                <div className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${option.accent} text-xl font-bold shadow-lg`} aria-hidden="true">{option.icon}</div>
+                <h2 className="mt-6 text-xl font-semibold">{option.label}</h2>
+                <p className="mt-2 min-h-12 text-sm leading-6 text-slate-300">{option.description}</p>
+                <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white">
+                  Start registration <span className="transition-transform group-hover:translate-x-1">→</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+          <p className="mt-8 text-center text-sm text-slate-400">Free to join · Set up in minutes · Built for UPSC education</p>
+        </div>
+      </section>
+
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
@@ -210,29 +253,6 @@ export default function HomePage() {
                 </button>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* For Providers CTA */}
-      <section className="py-16 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold">Are you a Coaching Institute, Educator, or Publisher?</h2>
-            <p className="mt-4 text-gray-300">
-              Join ExamPrep to reach thousands of UPSC aspirants. List your courses, test series, and study materials on India&apos;s fastest growing exam prep platform.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <Link to="/signup" className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">
-                Register as Institute
-              </Link>
-              <Link to="/signup" className="bg-white text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
-                Register as Educator
-              </Link>
-              <Link to="/signup" className="border border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/10 transition">
-                Register as Publisher
-              </Link>
-            </div>
           </div>
         </div>
       </section>
