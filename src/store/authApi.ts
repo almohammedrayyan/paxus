@@ -7,27 +7,54 @@ interface LoginRequest {
   password: string;
 }
 
+type Token = { token?: string };
+
 type LoginResponse = {
   accessToken?: string;
   refreshToken?: string;
   user?: Partial<AuthUser>;
   data?: LoginResponse;
+  tokenData?: {
+    access?: Token;
+    refresh?: Token;
+  };
+  _id?: string;
+  id?: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  avatar?: string;
+  role?: AuthUser['role'];
 };
 
 function toSession(response: LoginResponse): AuthSession {
+  // The API returns { data: { data: user, tokenData: { access, refresh } } }.
+  // Keep support for the previous flat response while normalizing both formats.
   const payload = response.data ?? response;
-  const user = payload.user;
-  if (!payload.accessToken || !payload.refreshToken || !user?.id || !user.role) {
+  const user: LoginResponse = payload.data ?? payload.user ?? {};
+  const accessToken = payload.accessToken ?? payload.tokenData?.access?.token;
+  const refreshToken = payload.refreshToken ?? payload.tokenData?.refresh?.token;
+  const id = user?.id ?? user?._id;
+  const role = user?.role;
+
+  if (!accessToken || !refreshToken || !id || !role) {
     throw new Error('The login response is missing tokens or user details.');
   }
+
+  const name = user?.name
+    ?? [user?.firstName, user?.lastName].filter(Boolean).join(' ')
+    ?? user?.email
+    ?? 'User';
+
   return {
-    accessToken: payload.accessToken,
-    refreshToken: payload.refreshToken,
+    accessToken,
+    refreshToken,
     user: {
-      id: user.id,
-      name: user.name ?? user.email ?? 'User',
+      id,
+      name,
       email: user.email ?? '',
-      role: user.role,
+      role,
       avatar: user.avatar,
     },
   };
