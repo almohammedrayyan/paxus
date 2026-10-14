@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import type { UserRole } from '@/lib/types';
+import { useSignupMutation } from '@/store/authApi';
 
 /* -------------------------------------------------------------------------- */
 /*  Constants                                                                  */
@@ -129,6 +130,7 @@ export default function SignupPage() {
   const [searchParams] = useSearchParams();
   const requestedRole = searchParams.get('role');
   const providerRoles: UserRole[] = ['institute', 'educator', 'publisher'];
+  const [signup] = useSignupMutation();
 
   // Step management
   const [currentStep, setCurrentStep] = useState(1);
@@ -140,7 +142,8 @@ export default function SignupPage() {
   );
 
   // Step 2 - Basic info
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -176,7 +179,8 @@ export default function SignupPage() {
 
   const validateStep2 = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!name.trim()) newErrors.name = 'Full name is required.';
+    if (!firstName.trim()) newErrors.firstName = 'First name is required.';
+    if (!lastName.trim()) newErrors.lastName = 'Last name is required.';
     if (!email.trim()) newErrors.email = 'Email address is required.';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Enter a valid email address.';
     if (!phone.trim()) newErrors.phone = 'Phone number is required.';
@@ -242,8 +246,41 @@ export default function SignupPage() {
     }
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    navigate('/login');
+    try {
+      await signup({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        phone: phone.replace(/\D/g, ''),
+        password,
+        city: city.trim(),
+        role: selectedRole,
+        targetExam,
+        stage,
+        optionalSubject,
+        language,
+        instituteName: instituteName.trim(),
+        instituteDescription: instituteDescription.trim(),
+        instituteAddress: instituteAddress.trim(),
+        bio: bio.trim(),
+        specializations: specializations.trim(),
+        experience: experience ? Number(experience) : undefined,
+        publisherName: publisherName.trim(),
+        publisherDescription: publisherDescription.trim(),
+      }).unwrap();
+      navigate('/login');
+    } catch (requestError) {
+      const message = requestError && typeof requestError === 'object' && 'data' in requestError
+        && requestError.data && typeof requestError.data === 'object' && 'message' in requestError.data
+        && typeof requestError.data.message === 'string'
+        ? requestError.data.message
+        : requestError && typeof requestError === 'object' && 'error' in requestError && typeof requestError.error === 'string'
+          ? requestError.error
+          : 'Unable to create your account. Please try again.';
+      setErrors({ submit: message });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   /* -------- Helpers -------- */
@@ -317,6 +354,12 @@ export default function SignupPage() {
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
 
+          {errors.submit && (
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {errors.submit}
+            </div>
+          )}
+
           {/* ====== STEP 1 : Choose Role ====== */}
           {currentStep === 1 && (
             <div>
@@ -388,21 +431,41 @@ export default function SignupPage() {
 
               <div className="space-y-4">
                 {/* Name */}
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Full name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className={`w-full px-4 py-2.5 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition ${
-                      errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      First name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="firstName"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Enter your first name"
+                      autoComplete="given-name"
+                      className={`w-full px-4 py-2.5 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition ${
+                        errors.firstName ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.firstName && <p className="mt-1 text-xs text-red-600">{errors.firstName}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Last name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="lastName"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Enter your last name"
+                      autoComplete="family-name"
+                      className={`w-full px-4 py-2.5 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition ${
+                        errors.lastName ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.lastName && <p className="mt-1 text-xs text-red-600">{errors.lastName}</p>}
+                  </div>
                 </div>
 
                 {/* Email */}

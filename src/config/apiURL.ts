@@ -7,4 +7,19 @@ export const END_POINT = {
     logout: "/api/auth/logout",
     refreshToken: "/api/auth/refreshToken",
   },
+  users: {
+    create: '/api/users/create',
+  },
+  educator: {
+    create: '/api/educator/create',
+  },
+  student: {
+    create: '/api/student/create',
+  },
+  institute: {
+    create: '/api/institute/create',
+  },
+  publish: {
+    create: '/api/publish/create',
+  },
 } as const;
