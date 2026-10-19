@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { mockCourses } from '@/lib/data';
+import type { Course } from '@/lib/types';
 
 interface Lesson {
   id: string;
@@ -16,7 +16,9 @@ interface TestQuestion {
 }
 
 export default function EducatorCoursesPage() {
-  const educatorCourses = mockCourses.filter((c) => c.providerId === 'edu-1');
+  // Courses will be populated from the list API when that endpoint is available.
+  const educatorCourses: Course[] = [];
+  const showCourseDirectory = false;
 
   // Course creation form state
   const [showCourseForm, setShowCourseForm] = useState(false);
@@ -122,6 +124,8 @@ export default function EducatorCoursesPage() {
         </div>
       </div>
 
+      {showCourseDirectory && (
+        <>
       {/* Existing Courses List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -173,6 +177,9 @@ export default function EducatorCoursesPage() {
           ))}
         </div>
       </div>
+
+        </>
+      )}
 
       {/* Create New Course Form */}
       {showCourseForm && (

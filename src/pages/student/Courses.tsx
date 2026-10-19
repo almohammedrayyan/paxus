@@ -1,9 +1,58 @@
 import { useState, useMemo } from 'react';
-import { mockCourses } from '@/lib/data';
+import type { Course } from '@/lib/types';
+import { useGetAllCoursesQuery } from '@/store/courseApi';
 
 type SortOption = 'popularity' | 'rating' | 'price-low' | 'price-high' | 'newest';
 
+function coursesFromResponse(response: unknown): Course[] {
+  if (!response || typeof response !== 'object') return [];
+  const root = response as Record<string, unknown>;
+  const payload = root.data;
+  const records = Array.isArray(payload)
+    ? payload
+    : payload && typeof payload === 'object' && Array.isArray((payload as Record<string, unknown>).data)
+      ? (payload as Record<string, unknown>).data as unknown[]
+      : [];
+
+  return records.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const course = item as Record<string, unknown>;
+    const id = typeof course._id === 'string' ? course._id : typeof course.id === 'string' ? course.id : null;
+    const title = typeof course.title === 'string' ? course.title : null;
+    if (!id || !title) return [];
+    const price = typeof course.price === 'number' ? course.price : Number(course.price) || 0;
+    const originalPrice = typeof course.originalPrice === 'number' ? course.originalPrice : Number(course.originalPrice) || price;
+    const providerType = course.providerType === 'educator' ? 'educator' : 'institute';
+
+    return [{
+      id,
+      title,
+      description: typeof course.description === 'string' ? course.description : '',
+      provider: typeof course.provider === 'string' ? course.provider : typeof course.providerName === 'string' ? course.providerName : 'Paxus Provider',
+      providerType,
+      providerId: typeof course.providerId === 'string' ? course.providerId : '',
+      category: typeof course.category === 'string' ? course.category : '',
+      subjects: Array.isArray(course.subjects) ? course.subjects.filter((subject): subject is string => typeof subject === 'string') : [],
+      stage: course.stage === 'mains' || course.stage === 'interview' || course.stage === 'all' ? course.stage : 'prelims',
+      language: typeof course.language === 'string' ? course.language : 'English',
+      price,
+      originalPrice,
+      rating: typeof course.rating === 'number' ? course.rating : 0,
+      reviewsCount: typeof course.reviewsCount === 'number' ? course.reviewsCount : 0,
+      studentsEnrolled: typeof course.studentsEnrolled === 'number' ? course.studentsEnrolled : 0,
+      duration: typeof course.duration === 'string' ? course.duration : '—',
+      lessons: typeof course.lessons === 'number' ? course.lessons : 0,
+      thumbnail: typeof course.thumbnail === 'string' ? course.thumbnail : '',
+      featured: Boolean(course.featured),
+      tags: Array.isArray(course.tags) ? course.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+      createdAt: typeof course.createdAt === 'string' ? course.createdAt : '',
+    }];
+  });
+}
+
 export default function CoursesPage() {
+  const { data: coursesResponse, isLoading } = useGetAllCoursesQuery();
+  const apiCourses = useMemo(() => coursesFromResponse(coursesResponse), [coursesResponse]);
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('all');
   const [languageFilter, setLanguageFilter] = useState<string>('all');
@@ -14,12 +63,12 @@ export default function CoursesPage() {
 
   const allSubjects = useMemo(() => {
     const subjects = new Set<string>();
-    mockCourses.forEach((c) => c.subjects.forEach((s) => subjects.add(s)));
+    apiCourses.forEach((c) => c.subjects.forEach((s) => subjects.add(s)));
     return Array.from(subjects).sort();
-  }, []);
+  }, [apiCourses]);
 
   const filteredCourses = useMemo(() => {
-    let courses = [...mockCourses];
+    let courses = [...apiCourses];
 
     // Search
     if (search) {
@@ -74,7 +123,7 @@ export default function CoursesPage() {
     }
 
     return courses;
-  }, [search, stageFilter, languageFilter, priceRange, subjectFilter, sortBy]);
+  }, [apiCourses, search, stageFilter, languageFilter, priceRange, subjectFilter, sortBy]);
 
   const stageOptions = [
     { value: 'all', label: 'All Stages' },
@@ -241,7 +290,7 @@ export default function CoursesPage() {
 
         {/* Course Grid */}
         <div className="flex-1">
-          <p className="mb-4 text-sm text-gray-500">{filteredCourses.length} courses found</p>
+          <p className="mb-4 text-sm text-gray-500">{isLoading ? 'Loading courses...' : `${filteredCourses.length} courses found`}</p>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {filteredCourses.map((course, idx) => (
               <div key={course.id} className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg hover:-translate-y-0.5">
