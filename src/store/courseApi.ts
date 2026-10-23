@@ -22,6 +22,7 @@ export interface CourseRequest extends CourseProviderScope {
 
 type CourseByIdRequest = { _id: string };
 type DeleteCourseRequest = CourseProviderScope & { _id: string };
+type ApplyCourseRequest = { _id: string; userId: string };
 
 const withCourseId = (url: string, _id: string) =>
   url.replace(":id", encodeURIComponent(_id));
@@ -45,13 +46,24 @@ export const courseApi = api.injectEndpoints({
       }),
     }),
     updateCourse: build.mutation<unknown, CourseRequest>({
-      query: (body) => ({ url: END_POINT.course.update, method: "PUT", body }),
+      query: ({ role: _role, ...body }) => ({
+        url: END_POINT.course.update,
+        method: "PUT",
+        body,
+      }),
     }),
     deleteCourse: build.mutation<unknown, DeleteCourseRequest>({
       query: ({ _id, ...body }) => ({
         url: withCourseId(END_POINT.course.delete, _id),
         method: "DELETE",
         body,
+      }),
+    }),
+    applyCourse: build.mutation<unknown, ApplyCourseRequest>({
+      query: ({ _id, userId }) => ({
+        url: withCourseId(END_POINT.course.applyCourse, _id),
+        method: "PUT",
+        body: { userId },
       }),
     }),
   }),
@@ -64,4 +76,5 @@ export const {
   useGetCourseByIdMutation,
   useUpdateCourseMutation,
   useDeleteCourseMutation,
+  useApplyCourseMutation,
 } = courseApi;

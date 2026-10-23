@@ -69,6 +69,7 @@ export interface Course {
   rating: number;
   reviewsCount: number;
   studentsEnrolled: number;
+  totalRevenue?: number;
   duration: string;
   lessons: number;
   thumbnail: string;

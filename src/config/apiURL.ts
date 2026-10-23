@@ -28,5 +28,6 @@ export const END_POINT = {
     getById: "/api/course/getById/:id",
     update: "/api/course/update",
     delete: "/api/course/delete/:id",
+    applyCourse: "/api/course/apply-course/:id",
   },
 } as const;

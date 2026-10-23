@@ -51,6 +51,7 @@ interface CourseFormData {
 interface CourseRow extends CourseFormData {
   id: string;
   studentsEnrolled: number;
+  totalRevenue: number;
   rating: number;
   reviewsCount: number;
 }
@@ -141,9 +142,13 @@ function courseRowsFromResponse(response: unknown): CourseRow[] {
         id,
         ...formData,
         studentsEnrolled:
-          typeof course.studentsEnrolled === "number"
-            ? course.studentsEnrolled
-            : 0,
+          Array.isArray(course.studentsEnrolled)
+            ? course.studentsEnrolled.length
+            : typeof course.studentsEnrolled === "number"
+              ? course.studentsEnrolled
+              : 0,
+        totalRevenue:
+          typeof course.totalRevenue === "number" ? course.totalRevenue : 0,
         rating: typeof course.rating === "number" ? course.rating : 0,
         reviewsCount:
           typeof course.reviewsCount === "number" ? course.reviewsCount : 0,
@@ -370,7 +375,16 @@ export default function InstituteCoursesPage() {
       </div>
 
       {/* Course Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+          <div className="text-2xl font-bold text-emerald-600">
+            ₹
+            {instituteCourses
+              .reduce((sum, c) => sum + c.totalRevenue, 0)
+              .toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+          </div>
+          <div className="text-sm text-gray-500">Total Revenue</div>
+        </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
           <div className="text-2xl font-bold text-gray-900">
             {instituteCourses.length}
@@ -488,12 +502,7 @@ export default function InstituteCoursesPage() {
                   <td className="py-4 px-4">
                     <span className="text-sm font-medium text-gray-900">
                       ₹
-                      {(
-                        (course.studentsEnrolled *
-                          Number(course.price) *
-                          0.85) /
-                        100
-                      ).toLocaleString("en-IN", {
+                      {course.totalRevenue.toLocaleString("en-IN", {
                         maximumFractionDigits: 0,
                       })}
                     </span>

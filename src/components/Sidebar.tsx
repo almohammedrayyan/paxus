@@ -45,26 +45,29 @@ export default function Sidebar({ role }: { role: UserRole }) {
   const items = sidebarItems[role];
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)] hidden lg:block">
-      <div className="p-4">
-        <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+    <aside className="w-full overflow-hidden border-b border-gray-200 bg-white lg:min-h-[calc(100vh-4rem)] lg:w-64 lg:border-b-0 lg:border-r">
+      <div className="p-1 lg:p-4">
+        <div className="hidden px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-400 lg:block">
           {role === 'student' ? 'Learning' : role === 'admin' ? 'Management' : 'Provider'}
         </div>
-        <nav className="mt-2 space-y-1">
+        <nav className="flex justify-center gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mt-2 lg:block lg:space-y-1">
           {items.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <Link
                 key={item.href}
                 to={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`group/item flex shrink-0 items-center gap-0 rounded-lg px-2 py-2 text-sm font-medium transition-all duration-200 group-hover/item:gap-2 lg:gap-3 lg:px-3 lg:py-2.5 ${
                   isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
+                title={item.label}
               >
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
                 </svg>
-                {item.label}
+                <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/item:max-w-32 group-hover/item:opacity-100 lg:max-w-32 lg:opacity-100">
+                  {item.label}
+                </span>
               </Link>
             );
           })}

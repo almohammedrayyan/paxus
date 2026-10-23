@@ -98,7 +98,7 @@ export const authApi = api.injectEndpoints({
       query: (body) => ({ url: END_POINT.auth.login, method: 'POST', body }),
       transformResponse: (response: LoginResponse) => toSession(response),
     }),
-    logout: build.mutation<void, { refreshToken: string }>({
+    logout: build.mutation<void, { _id: string }>({
       query: (body) => ({ url: END_POINT.auth.logout, method: 'POST', body }),
     }),
     signup: build.mutation<void, SignupRequest>({

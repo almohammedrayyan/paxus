@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { Course } from '@/lib/types';
-import { useGetAllCoursesQuery } from '@/store/courseApi';
+import { useApplyCourseMutation, useGetAllCoursesQuery } from '@/store/courseApi';
+import { useAppSelector } from '@/store/hooks';
 
 type SortOption = 'popularity' | 'rating' | 'price-low' | 'price-high' | 'newest';
 
@@ -39,7 +40,9 @@ function coursesFromResponse(response: unknown): Course[] {
       originalPrice,
       rating: typeof course.rating === 'number' ? course.rating : 0,
       reviewsCount: typeof course.reviewsCount === 'number' ? course.reviewsCount : 0,
-      studentsEnrolled: typeof course.studentsEnrolled === 'number' ? course.studentsEnrolled : 0,
+      studentsEnrolled: Array.isArray(course.studentsEnrolled)
+        ? course.studentsEnrolled.length
+        : typeof course.studentsEnrolled === 'number' ? course.studentsEnrolled : 0,
       duration: typeof course.duration === 'string' ? course.duration : '—',
       lessons: typeof course.lessons === 'number' ? course.lessons : 0,
       thumbnail: typeof course.thumbnail === 'string' ? course.thumbnail : '',
@@ -51,7 +54,9 @@ function coursesFromResponse(response: unknown): Course[] {
 }
 
 export default function CoursesPage() {
-  const { data: coursesResponse, isLoading } = useGetAllCoursesQuery();
+  const { data: coursesResponse, isLoading, refetch } = useGetAllCoursesQuery();
+  const userId = useAppSelector((state) => state.auth.session?.user.id);
+  const [applyCourse, { isLoading: isEnrolling }] = useApplyCourseMutation();
   const apiCourses = useMemo(() => coursesFromResponse(coursesResponse), [coursesResponse]);
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('all');
@@ -60,6 +65,21 @@ export default function CoursesPage() {
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('popularity');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+
+  const confirmEnrollment = async () => {
+    if (!selectedCourse || !userId) return;
+
+    setEnrollError(null);
+    try {
+      await applyCourse({ _id: selectedCourse.id, userId }).unwrap();
+      setSelectedCourse(null);
+      await refetch();
+    } catch {
+      setEnrollError('Unable to enroll in this course. Please try again.');
+    }
+  };
 
   const allSubjects = useMemo(() => {
     const subjects = new Set<string>();
@@ -340,7 +360,11 @@ export default function CoursesPage() {
                       </span>
                     </div>
                   </div>
-                  <button className="mt-3 w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 active:bg-indigo-800">
+                  <button
+                    type="button"
+                    onClick={() => { setEnrollError(null); setSelectedCourse(course); }}
+                    className="mt-3 w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+                  >
                     Enroll Now
                   </button>
                 </div>
@@ -358,6 +382,24 @@ export default function CoursesPage() {
           )}
         </div>
       </div>
+
+      {selectedCourse && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="enrollment-title">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 id="enrollment-title" className="text-xl font-bold text-slate-900">Enroll in this course?</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Do you want to enroll in <span className="font-semibold">{selectedCourse.title}</span> now?
+            </p>
+            {enrollError && <p className="mt-3 text-sm text-rose-600">{enrollError}</p>}
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setSelectedCourse(null)} disabled={isEnrolling} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-50">No</button>
+              <button type="button" onClick={confirmEnrollment} disabled={isEnrolling} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                {isEnrolling ? 'Enrolling...' : 'Yes, enroll'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

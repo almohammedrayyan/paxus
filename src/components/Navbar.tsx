@@ -21,7 +21,7 @@ export default function Navbar() {
   const getDashboardLink = () => (user ? `/${user.role}` : '/login');
   const isActive = (to: string) => location.pathname === to;
   const logout = () => {
-    if (session?.refreshToken) void logoutRequest({ refreshToken: session.refreshToken });
+    if (session?.user.id) void logoutRequest({ _id: session.user.id });
     dispatch(clearSession());
   };
 
