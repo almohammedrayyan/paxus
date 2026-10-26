@@ -114,19 +114,24 @@ function errorMessage(error: unknown) {
   return "Something went wrong. Please try again.";
 }
 
-function courseRowsFromResponse(response: unknown): CourseRow[] {
-  if (!response || typeof response !== "object") return [];
+function courseRowsFromResponse(response: unknown): {
+  courses: CourseRow[];
+  totalRevenue: number;
+} {
+  if (!response || typeof response !== "object") {
+    return { courses: [], totalRevenue: 0 };
+  }
   const root = response as Record<string, unknown>;
   const payload = root.data;
   const courses = Array.isArray(payload)
     ? payload
     : payload &&
         typeof payload === "object" &&
-        Array.isArray((payload as Record<string, unknown>).data)
-      ? ((payload as Record<string, unknown>).data as unknown[])
+        Array.isArray((payload as Record<string, unknown>).courses)
+      ? ((payload as Record<string, unknown>).courses as unknown[])
       : [];
 
-  return courses.flatMap((item) => {
+  const rows: CourseRow[] = courses.flatMap((item): CourseRow[] => {
     if (!item || typeof item !== "object") return [];
     const course = item as Record<string, unknown>;
     const id =
@@ -155,6 +160,15 @@ function courseRowsFromResponse(response: unknown): CourseRow[] {
       },
     ];
   });
+
+  const responseTotalRevenue =
+    payload &&
+    typeof payload === "object" &&
+    typeof (payload as Record<string, unknown>).totalRevenue === "number"
+      ? Number((payload as Record<string, unknown>).totalRevenue)
+      : rows.reduce((sum, course) => sum + course.totalRevenue, 0);
+
+  return { courses: rows, totalRevenue: responseTotalRevenue };
 }
 
 export default function InstituteCoursesPage() {
@@ -181,7 +195,8 @@ export default function InstituteCoursesPage() {
     providerScope!,
     { skip: !providerScope },
   );
-  const instituteCourses = courseRowsFromResponse(coursesResponse);
+  const { courses: instituteCourses, totalRevenue } =
+    courseRowsFromResponse(coursesResponse);
 
   const filteredCourses = instituteCourses.filter((course) => {
     const matchesStage =
@@ -379,9 +394,9 @@ export default function InstituteCoursesPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
           <div className="text-2xl font-bold text-emerald-600">
             ₹
-            {instituteCourses
-              .reduce((sum, c) => sum + c.totalRevenue, 0)
-              .toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+            {totalRevenue.toLocaleString("en-IN", {
+              maximumFractionDigits: 0,
+            })}
           </div>
           <div className="text-sm text-gray-500">Total Revenue</div>
         </div>
