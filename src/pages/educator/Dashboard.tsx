@@ -1,21 +1,64 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { mockEducators, mockCourses, mockReviews } from '@/lib/data';
+import { useAppSelector } from '@/store/hooks';
+import { useGetProfileQuery, useUpdateEducatorProfileMutation } from '@/store/profileApi';
+import { useSnackbar } from 'notistack';
 
 export default function EducatorDashboard() {
-  const educator = mockEducators.find((e) => e.id === 'edu-1')!;
+  const fallbackEducator = mockEducators.find((e) => e.id === 'edu-1')!;
+  const session = useAppSelector((state) => state.auth.session);
+  const { enqueueSnackbar } = useSnackbar();
+  const { data: profile, refetch } = useGetProfileQuery(
+    { role: 'educator', userId: session?.user.id ?? '' },
+    { skip: !session?.user.id },
+  );
+  const [updateEducatorProfile, { isLoading: isSaving }] = useUpdateEducatorProfileMutation();
   const educatorCourses = mockCourses.filter((c) => c.providerId === 'edu-1');
   const educatorCourseIds = educatorCourses.map((c) => c.id);
   const recentReviews = mockReviews.filter((r) => r.courseId && educatorCourseIds.includes(r.courseId));
 
   const [editMode, setEditMode] = useState(false);
-  const [bio, setBio] = useState(educator.bio);
-  const [specializations, setSpecializations] = useState(educator.specializations.join(', '));
-  const [contactEmail, setContactEmail] = useState(educator.email);
-  const [contactPhone, setContactPhone] = useState(educator.phone || '');
+  const [bio, setBio] = useState('');
+  const [specializations, setSpecializations] = useState('');
+  const [experience, setExperience] = useState('0');
 
-  const handleSaveProfile = () => {
-    setEditMode(false);
+  useEffect(() => {
+    if (!profile || editMode) return;
+    setBio(profile.bio ?? fallbackEducator.bio);
+    setSpecializations((profile.specializations ?? fallbackEducator.specializations).join(', '));
+    setExperience(String(profile.experience ?? fallbackEducator.experience));
+  }, [profile, editMode, fallbackEducator]);
+
+  const profileUser = profile?.userId && typeof profile.userId === 'object' ? profile.userId : undefined;
+  const educatorName = session?.user.name
+    ?? [profileUser?.firstName, profileUser?.lastName].filter(Boolean).join(' ')
+    ?? fallbackEducator.name;
+  const studentsCount = profile?.studentsCount ?? 0;
+  const coursesCount = profile?.coursesCount ?? 0;
+  const rating = profile?.rating ?? 0;
+
+  const handleSaveProfile = async () => {
+    if (!session?.user.id) return;
+    const parsedExperience = Number(experience);
+    if (!Number.isInteger(parsedExperience) || parsedExperience < 0) {
+      enqueueSnackbar('Experience must be a whole number of years.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      await updateEducatorProfile({
+        userId: session.user.id,
+        bio: bio.trim(),
+        specializations: specializations.split(',').map((item) => item.trim()).filter(Boolean),
+        experience: parsedExperience,
+      }).unwrap();
+      await refetch();
+      setEditMode(false);
+      enqueueSnackbar('Educator profile updated successfully.', { variant: 'success' });
+    } catch {
+      enqueueSnackbar('Unable to update your educator profile.', { variant: 'error' });
+    }
   };
 
   return (
@@ -23,7 +66,7 @@ export default function EducatorDashboard() {
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Educator Dashboard</h1>
-        <p className="text-gray-500 mt-1">Welcome back, Dr. Sidharth Arora</p>
+        <p className="text-gray-500 mt-1">Welcome back, {educatorName}</p>
       </div>
 
       {/* Profile Section */}
@@ -32,13 +75,14 @@ export default function EducatorDashboard() {
           <h2 className="text-lg font-semibold text-gray-900">Profile</h2>
           <button
             onClick={() => (editMode ? handleSaveProfile() : setEditMode(true))}
+            disabled={isSaving}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               editMode
                 ? 'bg-green-600 text-white hover:bg-green-700'
                 : 'bg-indigo-600 text-white hover:bg-indigo-700'
             }`}
           >
-            {editMode ? 'Save Profile' : 'Edit Profile'}
+            {isSaving ? 'Saving...' : editMode ? 'Save Profile' : 'Edit Profile'}
           </button>
         </div>
 
@@ -46,15 +90,15 @@ export default function EducatorDashboard() {
           {/* Avatar */}
           <div className="flex-shrink-0">
             <div className="w-24 h-24 bg-indigo-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-3xl font-bold">S</span>
+              <span className="text-white text-3xl font-bold">{educatorName.charAt(0).toUpperCase()}</span>
             </div>
           </div>
 
           {/* Profile Info */}
           <div className="flex-1 space-y-4">
             <div className="flex items-center gap-3">
-              <h3 className="text-xl font-bold text-gray-900">{educator.name}</h3>
-              {educator.verified && (
+              <h3 className="text-xl font-bold text-gray-900">{educatorName}</h3>
+              {profile?.verified && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                     <path
@@ -90,25 +134,15 @@ export default function EducatorDashboard() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={contactEmail}
-                      onChange={(e) => setContactEmail(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input
-                      type="tel"
-                      value={contactPhone}
-                      onChange={(e) => setContactPhone(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Years of experience</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={experience}
+                    onChange={(e) => setExperience(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
                 </div>
               </div>
             ) : (
@@ -125,9 +159,8 @@ export default function EducatorDashboard() {
                   ))}
                 </div>
                 <div className="flex items-center gap-6 text-sm text-gray-500">
-                  <span>{educator.experience} years experience</span>
-                  <span>{educator.city}</span>
-                  <span>{educator.language}</span>
+                  <span>{experience} years experience</span>
+                  <span>{session?.user.email}</span>
                 </div>
               </>
             )}
@@ -140,7 +173,7 @@ export default function EducatorDashboard() {
         {[
           {
             label: 'Total Students',
-            value: '5,400',
+            value: studentsCount.toLocaleString(),
             icon: (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -155,7 +188,7 @@ export default function EducatorDashboard() {
           },
           {
             label: 'Courses',
-            value: '8',
+            value: coursesCount.toLocaleString(),
             icon: (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -170,7 +203,7 @@ export default function EducatorDashboard() {
           },
           {
             label: 'Rating',
-            value: '4.9',
+            value: rating.toFixed(1),
             icon: (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -185,7 +218,7 @@ export default function EducatorDashboard() {
           },
           {
             label: 'Revenue',
-            value: '\u20B94,50,000',
+            value: '—',
             icon: (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path

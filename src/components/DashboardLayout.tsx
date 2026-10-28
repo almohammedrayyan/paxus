@@ -3,9 +3,15 @@ import Sidebar from './Sidebar';
 import type { UserRole } from '@/lib/types';
 import { Navigate } from 'react-router-dom';
 import { useAppSelector } from '@/store/hooks';
+import { useGetProfileQuery, type ProfileRole } from '@/store/profileApi';
 
 export default function DashboardLayout({ role, children }: { role: UserRole; children: React.ReactNode }) {
   const user = useAppSelector((state) => state.auth.session?.user);
+  const profileRole = role === 'admin' ? undefined : role as ProfileRole;
+  useGetProfileQuery(
+    { role: profileRole as ProfileRole, userId: user?.id ?? '' },
+    { skip: !user || !profileRole },
+  );
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== role) return <Navigate to={`/${user.role}`} replace />;
 

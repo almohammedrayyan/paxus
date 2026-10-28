@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import type { UserRole } from '@/lib/types';
 import { useSignupMutation } from '@/store/authApi';
+import { useSnackbar } from 'notistack';
 
 /* -------------------------------------------------------------------------- */
 /*  Constants                                                                  */
@@ -131,6 +132,7 @@ export default function SignupPage() {
   const requestedRole = searchParams.get('role');
   const providerRoles: UserRole[] = ['institute', 'educator', 'publisher'];
   const [signup] = useSignupMutation();
+  const { enqueueSnackbar } = useSnackbar();
 
   // Step management
   const [currentStep, setCurrentStep] = useState(1);
@@ -268,6 +270,7 @@ export default function SignupPage() {
         publisherName: publisherName.trim(),
         publisherDescription: publisherDescription.trim(),
       }).unwrap();
+      enqueueSnackbar('Registered successfully. Please sign in.', { variant: 'success' });
       navigate('/login');
     } catch (requestError) {
       const message = requestError && typeof requestError === 'object' && 'data' in requestError

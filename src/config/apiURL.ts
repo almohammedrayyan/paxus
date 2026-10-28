@@ -12,6 +12,7 @@ export const END_POINT = {
   },
   educator: {
     create: "/api/educator/create",
+    update: "/api/educator/update",
   },
   student: {
     create: "/api/student/create",
@@ -21,6 +22,12 @@ export const END_POINT = {
   },
   publish: {
     create: "/api/publish/create",
+  },
+  profile: {
+    student: "/api/student/getById/:id",
+    institute: "/api/institute/getById/:id",
+    educator: "/api/educator/getById/:id",
+    publisher: "/api/publish/getById/:id",
   },
   course: {
     create: "/api/course/create",

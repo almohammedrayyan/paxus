@@ -6,10 +6,12 @@ import Navbar from '@/components/Navbar';
 import { useLoginMutation } from '@/store/authApi';
 import { sessionReceived } from '@/store/authSlice';
 import { useAppDispatch } from '@/store/hooks';
+import { useSnackbar } from 'notistack';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const [login, { isLoading }] = useLoginMutation();
 
   const [email, setEmail] = useState('');
@@ -33,6 +35,7 @@ export default function LoginPage() {
     try {
       const session = await login({ email, password }).unwrap();
       dispatch(sessionReceived(session));
+      enqueueSnackbar('Logged in successfully.', { variant: 'success' });
       navigate(`/${session.user.role}`, { replace: true });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unable to sign in. Please check your credentials and try again.');

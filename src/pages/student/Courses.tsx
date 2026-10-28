@@ -9,11 +9,19 @@ function coursesFromResponse(response: unknown): Course[] {
   if (!response || typeof response !== 'object') return [];
   const root = response as Record<string, unknown>;
   const payload = root.data;
-  const records = Array.isArray(payload)
-    ? payload
-    : payload && typeof payload === 'object' && Array.isArray((payload as Record<string, unknown>).data)
-      ? (payload as Record<string, unknown>).data as unknown[]
-      : [];
+  // The course service responds with { data: { courses, totalRevenue } }.
+  // Also support array responses and the earlier nested `data` shape.
+  const records = Array.isArray(root)
+    ? root
+    : Array.isArray(payload)
+      ? payload
+      : payload && typeof payload === 'object'
+        ? Array.isArray((payload as Record<string, unknown>).courses)
+          ? (payload as Record<string, unknown>).courses as unknown[]
+          : Array.isArray((payload as Record<string, unknown>).data)
+            ? (payload as Record<string, unknown>).data as unknown[]
+            : []
+        : [];
 
   return records.flatMap((item) => {
     if (!item || typeof item !== 'object') return [];

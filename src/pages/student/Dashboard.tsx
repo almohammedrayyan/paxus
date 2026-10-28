@@ -1,8 +1,24 @@
 import { useState } from 'react';
 import { mockCourses, mockLiveClasses, sampleMockTest, mockNotifications, mockStudents } from '@/lib/data';
+import { useAppSelector } from '@/store/hooks';
+import { useGetProfileQuery } from '@/store/profileApi';
 
 export default function StudentDashboard() {
-  const student = mockStudents[0];
+  const session = useAppSelector((state) => state.auth.session);
+  const { data: profile } = useGetProfileQuery(
+    { role: 'student', userId: session?.user.id ?? '' },
+    { skip: !session?.user.id },
+  );
+  const fallbackStudent = mockStudents[0];
+  const student = {
+    ...fallbackStudent,
+    name: session?.user.name ?? fallbackStudent.name,
+    enrolledCourses: profile?.enrolledCourses ?? fallbackStudent.enrolledCourses,
+    completedTests: profile?.completedTests ?? fallbackStudent.completedTests,
+    studyStreak: profile?.studyStreak ?? fallbackStudent.studyStreak,
+    overallScore: profile?.overallScore ?? fallbackStudent.overallScore,
+    targetExam: profile?.targetExam ?? fallbackStudent.targetExam,
+  };
   const [quizAnswer, setQuizAnswer] = useState<number | null>(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
 
