@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { mockMentors } from '@/lib/data';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '@/store/hooks';
 
 export default function MentorshipPage() {
+  const navigate = useNavigate();
+  const user = useAppSelector((state) => state.auth.session?.user);
   const [filter, setFilter] = useState('all');
   const [bookingMentor, setBookingMentor] = useState<string | null>(null);
   const mentors = filter === 'all' ? mockMentors : mockMentors.filter(m => m.specialization.some(s => s.toLowerCase().includes(filter.toLowerCase())));
@@ -45,7 +49,7 @@ export default function MentorshipPage() {
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-lg font-bold text-gray-900">₹{mentor.pricePerSession}/session</span>
-                  <button onClick={() => setBookingMentor(mentor.id)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
+                  <button onClick={() => user ? setBookingMentor(mentor.id) : navigate('/login')} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
                     Book Session
                   </button>
                 </div>

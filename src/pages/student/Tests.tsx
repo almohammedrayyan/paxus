@@ -1,8 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { mockTestSeries, sampleMockTest } from '@/lib/data';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '@/store/hooks';
 
 export default function TestsPage() {
+  const navigate = useNavigate();
+  const user = useAppSelector((state) => state.auth.session?.user);
   const [activeTab, setActiveTab] = useState<'series' | 'practice'>('series');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Practice test state
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -83,31 +88,34 @@ export default function TestsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Tests & Mock Exams</h1>
-        <p className="mt-1 text-sm text-gray-500">Prepare with test series from top institutes and practice with mock tests</p>
+    <div className="w-full space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div><h1 className="text-xl font-semibold tracking-tight text-gray-900">Tests & Mock Exams</h1><p className="mt-0.5 text-sm text-gray-500">Practice with high-quality series and timed mock exams.</p></div>
+        {activeTab === 'series' && <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm" aria-label="Choose view">
+          <button type="button" onClick={() => setViewMode('grid')} aria-label="Grid view" className={`grid h-10 w-10 place-items-center rounded-lg transition ${viewMode === 'grid' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}><svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg></button>
+          <button type="button" onClick={() => setViewMode('list')} aria-label="List view" className={`grid h-10 w-10 place-items-center rounded-lg transition ${viewMode === 'list' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}><svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 7h14M5 12h14M5 17h14" /></svg></button>
+        </div>}
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <div className="flex gap-0">
+      <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+        <div className="flex gap-1">
           <button
             onClick={() => setActiveTab('series')}
-            className={`relative px-6 py-3 text-sm font-medium transition-colors ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === 'series'
-                ? 'text-indigo-600 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-indigo-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-gray-500 hover:bg-slate-50 hover:text-gray-700'
             }`}
           >
             Test Series
           </button>
           <button
             onClick={() => setActiveTab('practice')}
-            className={`relative px-6 py-3 text-sm font-medium transition-colors ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === 'practice'
-                ? 'text-indigo-600 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-indigo-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-gray-500 hover:bg-slate-50 hover:text-gray-700'
             }`}
           >
             Practice Test
@@ -117,9 +125,9 @@ export default function TestsPage() {
 
       {/* Test Series Tab */}
       {activeTab === 'series' && (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {mockTestSeries.map((ts) => (
-            <div key={ts.id} className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+        <div className={viewMode === 'grid' ? 'flex flex-wrap gap-4' : 'space-y-3'}>
+          {mockTestSeries.map((ts, index) => (
+            <div key={ts.id} className={`group rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg ${viewMode === 'grid' ? 'w-full sm:w-[19rem]' : 'mx-auto w-full max-w-5xl'}`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
@@ -132,26 +140,31 @@ export default function TestsPage() {
                       {ts.category}
                     </span>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">{ts.title}</h3>
+                  <h3 className="text-base font-semibold leading-6 text-gray-900 group-hover:text-indigo-700">{ts.title}</h3>
                   <p className="mt-1 text-sm text-gray-500">{ts.provider}</p>
                 </div>
-              </div>
-              <p className="mt-3 text-sm text-gray-600 line-clamp-2">{ts.description}</p>
-              <div className="mt-4 grid grid-cols-3 gap-3">
-                <div className="rounded-lg bg-gray-50 p-3 text-center">
-                  <p className="text-lg font-bold text-gray-900">{ts.totalTests}</p>
-                  <p className="text-xs text-gray-500">Tests</p>
-                </div>
-                <div className="rounded-lg bg-gray-50 p-3 text-center">
-                  <p className="text-lg font-bold text-gray-900">{ts.totalQuestions.toLocaleString()}</p>
-                  <p className="text-xs text-gray-500">Questions</p>
-                </div>
-                <div className="rounded-lg bg-gray-50 p-3 text-center">
-                  <p className="text-lg font-bold text-gray-900">{(ts.attemptedBy / 1000).toFixed(0)}K</p>
-                  <p className="text-xs text-gray-500">Attempted</p>
+                <div className="ml-4 flex shrink-0 flex-col items-end gap-2">
+                  <button onClick={() => !user && navigate('/login')} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700">Enroll</button>
+                  <span className="text-sm font-medium text-amber-600">★ {ts.rating}</span>
+                  <span className="text-lg font-semibold text-gray-900">&#8377;{ts.price.toLocaleString()}</span>
                 </div>
               </div>
-              <div className="mt-4 flex items-center justify-between">
+              <p className="mt-2 text-sm leading-5 text-gray-600 line-clamp-2">{ts.description}</p>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className={`rounded-lg p-1.5 text-center ${index % 2 === 0 ? 'bg-indigo-50' : 'bg-violet-50'}`}>
+                  <p className="text-base font-semibold text-gray-900">{ts.totalTests}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Tests</p>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-1.5 text-center">
+                  <p className="text-base font-semibold text-gray-900">{ts.totalQuestions.toLocaleString()}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Questions</p>
+                </div>
+                <div className="rounded-lg bg-emerald-50 p-1.5 text-center">
+                  <p className="text-base font-semibold text-gray-900">{(ts.attemptedBy / 1000).toFixed(0)}K</p>
+                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Attempts</p>
+                </div>
+              </div>
+              <div className="hidden">
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm font-medium text-yellow-600">{ts.rating}</span>
                   <div className="flex">
@@ -162,9 +175,9 @@ export default function TestsPage() {
                     ))}
                   </div>
                 </div>
-                <span className="text-xl font-bold text-gray-900">&#8377;{ts.price.toLocaleString()}</span>
+                <span className="text-lg font-semibold text-gray-900">&#8377;{ts.price.toLocaleString()}</span>
               </div>
-              <button className="mt-4 w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 active:bg-indigo-800">
+              <button onClick={() => !user && navigate('/login')} className="hidden mt-3 w-full rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 active:bg-indigo-800">
                 Enroll Now
               </button>
             </div>

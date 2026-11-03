@@ -40,24 +40,34 @@ const sidebarItems: Record<UserRole, SidebarItem[]> = {
   ],
 };
 
-export default function Sidebar({ role }: { role: UserRole }) {
+export default function Sidebar({ role, open, onToggle }: { role: UserRole; open: boolean; onToggle: () => void }) {
   const location = useLocation();
   const items = sidebarItems[role];
 
   return (
-    <aside className="w-full overflow-hidden border-b border-gray-200 bg-white lg:min-h-[calc(100vh-4rem)] lg:w-64 lg:border-b-0 lg:border-r">
-      <div className="p-1 lg:p-4">
-        <div className="hidden px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-400 lg:block">
-          {role === 'student' ? 'Learning' : role === 'admin' ? 'Management' : 'Provider'}
+    <aside className={`relative w-full overflow-visible border-b border-slate-200 bg-white transition-[width] duration-300 lg:min-h-[calc(100vh-4.5rem)] lg:shrink-0 lg:border-b-0 lg:border-r ${open ? 'lg:w-56' : 'lg:w-[4.5rem]'}`}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-0 top-4 z-20 hidden h-7 w-7 place-items-center rounded-l-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 lg:grid"
+        aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
+        aria-expanded={open}
+        title={open ? 'Collapse sidebar' : 'Expand sidebar'}
+      >
+        <svg className={`h-3.5 w-3.5 transition-transform ${open ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m9 18 6-6-6-6" /></svg>
+      </button>
+      <div className="relative p-1 lg:p-3">
+        <div className={`hidden items-center py-2 lg:flex ${open ? 'justify-between px-3' : 'justify-center px-0'}`}>
+          {open && <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{role === 'student' ? 'Learning' : role === 'admin' ? 'Management' : 'Provider'}</span>}
         </div>
-        <nav className="flex justify-center gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mt-2 lg:block lg:space-y-1">
+        <nav className={`flex justify-center gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mt-2 lg:block lg:space-y-1 ${open ? '' : 'lg:px-0'}`}>
           {items.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <Link
                 key={item.href}
                 to={item.href}
-                className={`group/item flex shrink-0 items-center gap-0 rounded-lg px-2 py-2 text-sm font-medium transition-all duration-200 group-hover/item:gap-2 lg:gap-3 lg:px-3 lg:py-2.5 ${
+                className={`group/item flex shrink-0 items-center gap-0 rounded-lg px-2 py-2 text-sm font-medium transition-all duration-200 group-hover/item:gap-2 lg:py-2.5 ${open ? 'lg:gap-3 lg:px-3' : 'lg:mx-auto lg:h-10 lg:w-10 lg:justify-center lg:px-0'} ${
                   isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
                 title={item.label}
@@ -65,7 +75,7 @@ export default function Sidebar({ role }: { role: UserRole }) {
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
                 </svg>
-                <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/item:max-w-32 group-hover/item:opacity-100 lg:max-w-32 lg:opacity-100">
+                <span className={`max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/item:max-w-32 group-hover/item:opacity-100 ${open ? 'lg:max-w-32 lg:opacity-100' : ''}`}>
                   {item.label}
                 </span>
               </Link>

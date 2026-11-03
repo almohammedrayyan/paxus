@@ -1,9 +1,13 @@
 import { useState, useMemo } from 'react';
 import { mockResources } from '@/lib/data';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '@/store/hooks';
 
 type ResourceType = 'all' | 'pdf' | 'ebook' | 'magazine' | 'notes' | 'video';
 
 export default function ResourcesPage() {
+  const navigate = useNavigate();
+  const user = useAppSelector((state) => state.auth.session?.user);
   const [activeType, setActiveType] = useState<ResourceType>('all');
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
   const [priceFilter, setPriceFilter] = useState<string>('all');
@@ -91,13 +95,14 @@ export default function ResourcesPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
+    <div className="mx-auto max-w-7xl space-y-4">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Study Resources</h1>
-          <p className="mt-1 text-sm text-gray-500">Access curated study materials, notes, and video lectures from top providers</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600">Resource library</p>
+          <h1 className="mt-1 text-xl font-semibold tracking-tight text-gray-900">Study Resources</h1>
+          <p className="mt-0.5 text-sm text-gray-500">Materials from trusted UPSC educators and publishers.</p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1">
+        <div className="flex shrink-0 items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
           <button
             onClick={() => setViewMode('grid')}
             className={`rounded-md p-2 transition-colors ${viewMode === 'grid' ? 'bg-indigo-100 text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
@@ -118,28 +123,39 @@ export default function ResourcesPage() {
       </div>
 
       {/* Type Tabs */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+        <div className="flex flex-wrap gap-2">
         {typeTabs.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setActiveType(tab.value)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${
               activeType === tab.value
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                : 'text-gray-600 hover:bg-slate-50 hover:text-gray-900'
             }`}
           >
             {tab.label}
           </button>
         ))}
+        </div>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <select value={subjectFilter} onChange={(e) => setSubjectFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+            <option value="all">All Subjects</option>{allSubjects.map((sub) => <option key={sub} value={sub}>{sub}</option>)}
+          </select>
+          <select value={priceFilter} onChange={(e) => setPriceFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+            <option value="all">All (Free & Paid)</option><option value="free">Free Only</option><option value="paid">Paid Only</option>
+          </select>
+          <span className="text-xs text-gray-500">{filteredResources.length} found</span>
+        </div>
       </div>
 
       {/* Filters Row */}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="hidden">
         <select
           value={subjectFilter}
           onChange={(e) => setSubjectFilter(e.target.value)}
-          className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
         >
           <option value="all">All Subjects</option>
           {allSubjects.map((sub) => (
@@ -149,23 +165,23 @@ export default function ResourcesPage() {
         <select
           value={priceFilter}
           onChange={(e) => setPriceFilter(e.target.value)}
-          className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
         >
           <option value="all">All (Free & Paid)</option>
           <option value="free">Free Only</option>
           <option value="paid">Paid Only</option>
         </select>
-        <span className="text-sm text-gray-500">{filteredResources.length} resources found</span>
+        <span className="text-sm text-gray-500 sm:ml-auto">{filteredResources.length} resources found</span>
       </div>
 
       {/* Grid View */}
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="flex flex-wrap gap-4">
           {filteredResources.map((resource) => {
             const typeInfo = typeIcons[resource.type];
             return (
-              <div key={resource.id} className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg hover:-translate-y-0.5">
-                <div className={`flex items-center justify-center py-8 ${typeInfo.bg}`}>
+              <div key={resource.id} className="group flex w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg sm:w-[17rem]">
+                <div className={`flex items-center justify-center py-4 ${typeInfo.bg}`}>
                   <div className={`${typeInfo.color}`}>
                     <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       {resource.type === 'pdf' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />}
@@ -176,7 +192,7 @@ export default function ResourcesPage() {
                     </svg>
                   </div>
                 </div>
-                <div className="p-5">
+                <div className="flex flex-col p-3.5">
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${typeInfo.bg} ${typeInfo.color}`}>
                       {resource.type.toUpperCase()}
@@ -187,7 +203,7 @@ export default function ResourcesPage() {
                       </span>
                     )}
                   </div>
-                  <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-indigo-600 transition-colors">{resource.title}</h3>
+                  <h3 className="text-sm font-semibold leading-5 text-gray-900 line-clamp-2 transition-colors group-hover:text-indigo-600">{resource.title}</h3>
                   <p className="mt-1 text-xs text-gray-500">{resource.provider}</p>
                   <p className="mt-1 text-xs text-gray-400">{resource.subject} | {resource.language}</p>
                   {resource.pages && (
@@ -199,7 +215,7 @@ export default function ResourcesPage() {
                     ) : (
                       <span className="text-lg font-bold text-gray-900">&#8377;{resource.price}</span>
                     )}
-                    <button className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                    <button onClick={() => !user && navigate('/login')} className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                       resource.free
                         ? 'bg-green-600 text-white hover:bg-green-700'
                         : 'bg-indigo-600 text-white hover:bg-indigo-700'
@@ -220,7 +236,7 @@ export default function ResourcesPage() {
           {filteredResources.map((resource) => {
             const typeInfo = typeIcons[resource.type];
             return (
-              <div key={resource.id} className="flex items-center gap-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+              <div key={resource.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center">
                 <div className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl ${typeInfo.bg}`}>
                   <div className={typeInfo.color}>{typeInfo.icon}</div>
                 </div>
@@ -248,13 +264,13 @@ export default function ResourcesPage() {
                   </div>
                   <p className="mt-1 text-sm text-gray-400 line-clamp-1">{resource.description}</p>
                 </div>
-                <div className="flex flex-shrink-0 items-center gap-4">
+                <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:flex-shrink-0">
                   {resource.free ? (
                     <span className="text-lg font-bold text-green-600">Free</span>
                   ) : (
                     <span className="text-lg font-bold text-gray-900">&#8377;{resource.price}</span>
                   )}
-                  <button className={`rounded-lg px-5 py-2.5 text-sm font-medium transition-colors ${
+                  <button onClick={() => !user && navigate('/login')} className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     resource.free
                       ? 'bg-green-600 text-white hover:bg-green-700'
                       : 'bg-indigo-600 text-white hover:bg-indigo-700'

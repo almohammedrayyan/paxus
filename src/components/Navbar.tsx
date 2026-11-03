@@ -34,7 +34,7 @@ export default function Navbar() {
             <span className="text-xl font-bold tracking-tight text-slate-950"><span className="text-indigo-600">PA</span>xus</span>
           </Link>
 
-          <div className="hidden shrink-0 items-center gap-7 md:flex">
+          {(!user || user.role === 'student') && <div className="hidden shrink-0 items-center gap-7 md:flex">
             {navigation.map((item) => (
               <Link
                 key={item.to}
@@ -44,7 +44,7 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
-          </div>
+          </div>}
 
           <div className="hidden items-center gap-3 md:flex">
             {user ? (
@@ -79,7 +79,7 @@ export default function Navbar() {
               <Link to="/" className={`flex items-center justify-between border-b border-slate-100 py-3.5 text-sm font-semibold ${location.pathname === '/' ? 'text-indigo-700' : 'text-slate-700'}`} onClick={() => setMenuOpen(false)}>
                 Home <span className="text-slate-300" aria-hidden="true">→</span>
               </Link>
-              {navigation.map((item) => (
+              {(!user || user.role === 'student') && navigation.map((item) => (
                 <Link key={item.to} to={item.to} className={`flex items-center justify-between border-b border-slate-100 py-3.5 text-sm font-semibold last:border-b-0 ${isActive(item.to) ? 'text-indigo-700' : 'text-slate-700'}`} onClick={() => setMenuOpen(false)}>
                   {item.label} <span className="text-slate-300" aria-hidden="true">→</span>
                 </Link>

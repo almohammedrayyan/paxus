@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { mockNotifications } from '@/lib/data';
+import { Navigate } from 'react-router-dom';
+import { useAppSelector } from '@/store/hooks';
 
 export default function NotificationsPage() {
+  const user = useAppSelector((state) => state.auth.session?.user);
   const [notifications, setNotifications] = useState(mockNotifications);
   const [filter, setFilter] = useState('all');
 
@@ -16,6 +19,8 @@ export default function NotificationsPage() {
 
   const filtered = filter === 'all' ? notifications : notifications.filter(n => n.type === filter);
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  if (!user) return <Navigate to="/login" replace />;
 
   return (
     <div className="max-w-3xl mx-auto">

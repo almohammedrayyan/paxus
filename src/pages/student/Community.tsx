@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { mockForumPosts } from '@/lib/data';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '@/store/hooks';
 
 export default function CommunityPage() {
+  const navigate = useNavigate();
+  const user = useAppSelector((state) => state.auth.session?.user);
   const [category, setCategory] = useState('All');
   const [showNewPost, setShowNewPost] = useState(false);
   const categories = ['All', 'Strategy', 'Resources', 'Optional', 'Current Affairs', 'Motivation'];
@@ -14,7 +18,7 @@ export default function CommunityPage() {
           <h1 className="text-2xl font-bold text-gray-900">Community Forums</h1>
           <p className="mt-1 text-gray-500">Discuss, share, and learn with fellow aspirants</p>
         </div>
-        <button onClick={() => setShowNewPost(!showNewPost)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
+        <button onClick={() => user ? setShowNewPost(!showNewPost) : navigate('/login')} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">
           + New Post
         </button>
       </div>
