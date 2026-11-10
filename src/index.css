@@ -16,3 +16,11 @@ body {
 ::-webkit-scrollbar-track { background: #f1f1f1; }
 ::-webkit-scrollbar-thumb { background: #c4c4c4; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #a0a0a0; }
+
+/* Keep the educator edit dialog consistent with the Create Course modal. */
+div[class*="max-w-lg"][class*="shadow-2xl"] {
+  max-width: 64rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+}

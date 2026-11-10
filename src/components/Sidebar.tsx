@@ -45,7 +45,7 @@ export default function Sidebar({ role, open, onToggle }: { role: UserRole; open
   const items = sidebarItems[role];
 
   return (
-    <aside className={`relative w-full overflow-visible border-b border-slate-200 bg-white transition-[width] duration-300 lg:min-h-[calc(100vh-4.5rem)] lg:shrink-0 lg:border-b-0 lg:border-r ${open ? 'lg:w-56' : 'lg:w-[4.5rem]'}`}>
+    <aside className={`relative w-full overflow-visible border-b border-slate-200 bg-white transition-[width] duration-300 lg:sticky lg:top-[4.5rem] lg:h-[calc(100vh-4.5rem)] lg:shrink-0 lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r ${open ? 'lg:w-56' : 'lg:w-[4.5rem]'}`}>
       <button
         type="button"
         onClick={onToggle}
